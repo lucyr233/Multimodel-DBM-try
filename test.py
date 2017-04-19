@@ -25,19 +25,46 @@ selectfeature=random.sample(range(0,107),50)
 validation_left=
 validation_right=
 
+
+learningrate=1
 # trying from what i understand
 # v_left to h_left to h_join to h_right to v_right
 
-def from_down_to_up(self, down)  # hidden from visible
+
+
+x_left=tf.placeholder(tf.float32,[None,59])
+x_right=tf.placeholder(tf.float32,[None,5])
+num_visible_left=59#len(origin)-5
+num_hidden_left=50
+num_visible_right=5#fixed
+num_hidden_right=5
+W_left=tf.Variable(tf.random_normal(num_visible_left,num_hidden_left),mean=0.0,stddev=0.01,name='weightsleft')
+W_right=tf.Variable(tf.random_normal(num_visible_right,num_hidden_right),mean=0.0,stddev=0.01,name='weightsright')
+biasup_left=tf.Variable(tf.Zeros([self.num_hidden_left]),name='biasup_left')
+biasdown_left=tf.Variable(tf.Zeros([self.num_visible_left]),name='biasdown_left')
+biasup_right=tf.Variable(tf.Zeros([self.num_hidden_right]),name='biasup_right')
+biasdown_right=tf.Variable(tf.Zeros([self.num_visible_right]),name='biasdown_right')
+
+
+def sample_prob(probs):
+    return tf.nn.relu(
+        tf.sign(
+            probs - tf.random_uniform(tf.shape(probs))))
+
+
+def from_down_to_up_left(self, x_left)  # hidden from visible
     #gaussian-berenouli
     #upprobGB=tf.nn.sigmoid(tf.matmul(down/sigma,self.W)+self.biasup)
     #replicate-softmax
     #upprobSM=tf.nn.sigmoid(M*biasup+tf.matmul(down,self.W))
     #binary, from visible to hidden it does not matter becasue hidden always binary
     upprob = tf.nn.sigmoid(
-        tf.matmul(down, self.W) + self.biasup)  # hprobs = tf.nn.sigmoid(tf.matmul(visible, self.W) + self.bh_)
+        tf.matmul(x_left, W_left) + biasup_left)  # hprobs = tf.nn.sigmoid(tf.matmul(visible, self.W) + self.bh_)
+    upstates= sample_prob(tf.nn.sigmoid(tf.matmul(x_left, W_left)+biasdown_left))
     return upprob #, upstates
-
+def from_down_to_up_right(self, x_right)
+    upprob=tf.nn.sigmoid(tf.matmul(x_right,W_right)+biasup_right)
+    return upprob
 
 def from_up_to_down(self, up)  # visible from hidden
     #gaussian-berenouli
@@ -50,13 +77,15 @@ def from_up_to_down(self, up)  # visible from hidden
     return downprob
 
 
-def updateWandbias(self, down, )  # inputdata,hprobs0,hstates0,vprobs,hprobs1,learningrate
+def updateWandbias(self, down, upprob,upstates)  # inputdata,hprobs0,hstates0,vprobs,hprobs1,learningrate
+    # how to get the old W AND BIAS in HERE?
     postive =
-    # =tf.matmul(tf.transpose(visible), hidden_states)#vis=bin
+    # =tf.matmul(tf.transpose(down), hidden_states)#vis=bin
+    # =tf. matmul(tf.transpose(down),hidden_probs)#vis=gauss
     negative =
-    # =tf.matmul(tf.transpose(vprobs), hprobs1)
+    # =tf.matmul(tf.transpose(downprob), upprob)
     W_update =
-    # =self.W.assign_add(self.learning_rate * (positive - negative))
+    # =W.assign_add(learning_rate * (positive - negative))
     biasup_update =
     # =self.bh_.assign_add(self.learning_rate * tf.reduce_mean(hprobs0 - hprobs1, 0))
     biasdown_update =
@@ -106,3 +135,7 @@ W_right, biasup_right, biasdown_right = updateWandbias(v_right, h_right, v_right
 err=V_left-v_left1
 err_sum=tf.reduce_mean(err*err)
 self.loss_function=tf.sqrt(tf.reduce_mean(tf.square(V_left-V_left1)))
+
+sess.tf.Session()
+init=tf.initialize_all_vavriables()
+sess.run(init)
